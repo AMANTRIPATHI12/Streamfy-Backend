@@ -4,48 +4,52 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import path from "path";
 
-import authRoutes from "./src/routes/auth.route.js";
-import userRoutes from "./src/routes/user.route.js";
-import chatRoutes from "./src/routes/chat.route.js";
-import { connectDB } from "./src/lib/db.js";
 
-const app = express();
-const port = process.env.PORT || 5501;
+import authRoutes from "./src/routes/auth.route.js"
+import UserRoutes from "./src/routes/user.route.js"
+import chatRoutes from "./src/routes/chat.route.js"
+import {connectDB} from "./src/lib/db.js"
 
-// ✅ Allowed frontend URLs (both local + deployed)
+
+const app=express()
+const port = process.env.PORT
+const __dirname=path.resolve();
+
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://streamfy-frontend.vercel.app",
-  "https://streamfy-frontend-c45wagc3k-amantripathi12s-projects.vercel.app",
+  "https://streamfy-frontend.vercel.app", // your Vercel domain
+  "https://streamfy-frontend-c45wagc3k-amantripathi12s-projects.vercel.app", // your actual preview link (optional)
 ];
 
-// ✅ Configure CORS
 app.use(
   cors({
     origin: function (origin, callback) {
-      // allow requests with no origin (like mobile apps, Postman)
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        console.error("Blocked by CORS:", origin);
-        callback(new Error("Not allowed by CORS"));
+        callback(new Error("CORS not allowed for this origin"));
       }
     },
     credentials: true,
   })
 );
 
-// ✅ Middleware
+
 app.use(express.json());
 app.use(cookieParser());
 
-// ✅ Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/users", userRoutes);
-app.use("/api/chat", chatRoutes);
+app.use("/api/auth",authRoutes)
+app.use("/api/users",UserRoutes);
+app.use("/api/chat",chatRoutes);
+if(process.env.NODE_ENV==="production"){
+  app.use(express.static(path.join(__dirname,"../frontend/dist")));
+  app.get("*",(req,res)=>{
+    res.sendFile(path.join(__dirname,"../frontend","dist","index.html"));
+  })
+}
 
-// ✅ Start server
-app.listen(port, () => {
-  console.log(`✅ Server running on port ${port}`);
+app.listen(port,()=>{
+  console.log(`Server running on port ${port}`);
   connectDB();
+  
 });
